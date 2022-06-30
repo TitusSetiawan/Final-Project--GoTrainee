@@ -56,5 +56,9 @@ type UserUpdateRes struct {
 	UserUpdateAt time.Time
 }
 
+type DeleteData struct {
+	Message string
+}
+
 var MapUser = map[int]Users{}
 var JwtKey = []byte("idontknow")

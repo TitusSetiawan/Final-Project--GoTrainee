@@ -22,6 +22,16 @@ func UserUpdate(uname string, email string, id int) bool {
 	return true
 }
 
+func UserDelete(uname string) error {
+	sqlSt := `delete from users where username = $1`
+	_, err := db.Db.Exec(sqlSt, uname)
+	if err != nil {
+		return err
+	}
+	return err
+
+}
+
 func UserGetById(id int) {
 	var NewUser entity.Users
 	sqlSt := `Select id, username, email, age, updated_at from users where id = $1;`

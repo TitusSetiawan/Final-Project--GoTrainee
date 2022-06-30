@@ -8,7 +8,7 @@ import (
 )
 
 func SignIn(uname string) (string, bool) {
-	expiredTime := time.Now().Add(30 * time.Minute)
+	expiredTime := time.Now().Add(24 * time.Hour)
 	claims := &entity.Claims{
 		Username: uname,
 		StandardClaims: jwt.StandardClaims{

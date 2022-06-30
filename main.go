@@ -29,6 +29,8 @@ func main() {
 	r.HandleFunc("/users/register", handler.PostRegister).Methods("POST")
 	r.HandleFunc("/users/login", handler.UserLogin).Methods("POST")
 	r.HandleFunc("/users", handler.UserUpdate).Methods("PUT")
+	r.HandleFunc("/users", handler.UserDelete).Methods("DELETE")
+
 	http.Handle("/", r)
 	http.ListenAndServe(":8080", nil)
 }

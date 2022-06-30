@@ -138,7 +138,6 @@ func UserUpdate(w http.ResponseWriter, r *http.Request) {
 			_, checkMail := svr.ValidationUsersEmail(UserUpdate.Email)
 			checkUname := svr.ValidationUsersPass(UserUpdate.Username)
 			if checkMail == checkUname {
-
 				var JwtKey = []byte(entity.JwtKey)
 				authHeader := r.Header.Get("Authorization")
 				if !strings.Contains(authHeader, "Bearer") {
@@ -146,7 +145,7 @@ func UserUpdate(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				tokenString := strings.Replace(authHeader, "Bearer ", "", -1)
-				fmt.Println("ini token string:", tokenString)
+				// fmt.Println("ini token string:", tokenString)
 				token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 					if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 						return nil, fmt.Errorf("Signing method invalid")
@@ -165,6 +164,7 @@ func UserUpdate(w http.ResponseWriter, r *http.Request) {
 				}
 
 				////////// Select /////////
+				fmt.Println(claims["exp"])
 				UserUpdate.Username = claims["username"].(string)
 				current_time := time.Now()
 				sqlSt := `update users set email = $1, username = $2, updated_at = $3 where id = $4`
@@ -195,19 +195,59 @@ func UserUpdate(w http.ResponseWriter, r *http.Request) {
 						fmt.Println("No Data", err)
 					}
 				}
-				// if svr.UserUpdate(UserUpdate.Username, UserUpdate.Email, idInt) {
-				NewUserRes.Id = idInt
-				NewUserRes.Username = UserUpdate.Username
-				NewUserRes.Email = UserUpdate.Email
-				NewUserRes.UserUpdateAt = NewUser.Update_at
-				NewUserRes.Age = NewUser.Age
-				jsonData, _ := json.Marshal(NewUserRes)
-				w.Header().Add("Content-Type", "application/json")
-				w.WriteHeader(200)
-				w.Write(jsonData)
-				// }
+				if svr.UserUpdate(UserUpdate.Username, UserUpdate.Email, idInt) {
+					NewUserRes.Id = idInt
+					NewUserRes.Username = UserUpdate.Username
+					NewUserRes.Email = UserUpdate.Email
+					NewUserRes.UserUpdateAt = NewUser.Update_at
+					NewUserRes.Age = NewUser.Age
+					jsonData, _ := json.Marshal(NewUserRes)
+					w.Header().Add("Content-Type", "application/json")
+					w.WriteHeader(200)
+					w.Write(jsonData)
+				}
 			}
 		}
 	}
+}
 
+func UserDelete(w http.ResponseWriter, r *http.Request) {
+	var NewDelete entity.DeleteData
+	if r.Method == "DELETE" {
+		var JwtKey = []byte(entity.JwtKey)
+		authHeader := r.Header.Get("Authorization")
+		if !strings.Contains(authHeader, "Bearer") {
+			http.Error(w, "invalid token", http.StatusBadRequest)
+			return
+		}
+		tokenString := strings.Replace(authHeader, "Bearer ", "", -1)
+		fmt.Println("ini token string:", tokenString)
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Signing method invalid")
+			}
+			return JwtKey, nil
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || !token.Valid {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		usernameClaim := claims["username"].(string)
+		if svr.UserDelete(usernameClaim) != nil {
+			fmt.Println("Can't deleted")
+		}
+		NewDelete.Message = "Your account has been successfully deleted"
+		prettyJSON, err := json.MarshalIndent(NewDelete, "", "  ")
+		if err != nil {
+			log.Fatal("Failed to generate json", err)
+		}
+		w.Write([]byte(prettyJSON))
+
+	}
 }
